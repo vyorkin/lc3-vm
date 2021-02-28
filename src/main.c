@@ -174,12 +174,13 @@ int handle_trap(uint16_t instr) {
   switch (instr & 0xFF) {
   case TRAP_GETC: {
     reg[R_R0] = (uint16_t)getchar();
-  } break;
+    break;
+  }
   case TRAP_OUT: {
-    char ch = (char)reg[R_R0];
-    putc(ch, stdout);
+    putc((char)reg[R_R0], stdout);
     fflush(stdout);
-  } break;
+    break;
+  }
   case TRAP_PUTS: {
     uint16_t *c = memory + reg[R_R0];
     while (*c) {
@@ -187,13 +188,15 @@ int handle_trap(uint16_t instr) {
       ++c;
     }
     fflush(stdout);
-  } break;
+    break;
+  }
   case TRAP_IN: {
     printf("> ");
     char ch = getchar();
     putc(ch, stdout);
     reg[R_R0] = (uint16_t)ch;
-  } break;
+    break;
+  }
   case TRAP_PUTSP: {
     uint16_t *c = memory + reg[R_R0];
     while (*c) {
@@ -206,7 +209,8 @@ int handle_trap(uint16_t instr) {
       ++c;
     }
     fflush(stdout);
-  } break;
+    break;
+  }
   case TRAP_HALT: {
     puts("HALT\n");
     fflush(stdout);
@@ -254,7 +258,8 @@ int main(int argc, char *argv[]) {
       if (cond_flag & reg[R_COND]) {
         reg[R_PC] += pc_offset;
       }
-    } break;
+      break;
+    }
     case OP_ADD: {
       // destination register (DR)
       uint16_t r0 = (instr >> 9) & 0x7;
@@ -272,7 +277,8 @@ int main(int argc, char *argv[]) {
         reg[r0] = reg[r1] + reg[r2];
       }
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_LD: {
       // pc offset (PCoffset9)
       uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
@@ -280,14 +286,16 @@ int main(int argc, char *argv[]) {
       uint16_t r0 = (instr >> 9) & 0x7;
       reg[r0] = mem_read(reg[R_PC] + pc_offset);
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_ST: {
       // pc offset (PCoffset9)
       uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       // source register (SR)
       uint16_t r1 = (instr >> 9) & 0x7;
       mem_write(reg[R_PC] + pc_offset, reg[r1]);
-    } break;
+      break;
+    }
     case OP_JSR: {
       reg[R_R7] = reg[R_PC];
       // pc offset mode flag
@@ -301,7 +309,8 @@ int main(int argc, char *argv[]) {
         uint16_t r_base = (instr >> 6) & 0x7;
         reg[R_PC] = reg[r_base];
       }
-    } break;
+      break;
+    }
     case OP_AND: {
       uint16_t r0 = (instr >> 9) & 0x7;
       uint16_t r1 = (instr >> 6) & 0x7;
@@ -314,7 +323,8 @@ int main(int argc, char *argv[]) {
         reg[r0] = reg[r1] & reg[r2];
       }
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_LDR: {
       // destination register (DR)
       uint16_t r0 = (instr >> 9) & 0x7;
@@ -324,7 +334,8 @@ int main(int argc, char *argv[]) {
       uint16_t offset = sign_extend(instr & 0x3F, 6);
       reg[r0] = mem_read(reg[r_base] + offset);
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_STR: {
       // source register (SR)
       uint16_t r1 = (instr >> 9) & 0x7;
@@ -333,7 +344,8 @@ int main(int argc, char *argv[]) {
       // memory offset (offset6)
       uint16_t offset = sign_extend(instr & 0x3F, 6);
       mem_write(reg[r_base] + offset, reg[r1]);
-    } break;
+      break;
+    }
     case OP_NOT: {
       // destination register (DR)
       uint16_t r0 = (instr >> 9) & 0x7;
@@ -341,7 +353,8 @@ int main(int argc, char *argv[]) {
       uint16_t r1 = (instr >> 6) & 0x7;
       reg[r0] = ~reg[r1];
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_LDI: {
       // destination register (DR)
       uint16_t r0 = (instr >> 9) & 0x7;
@@ -351,19 +364,22 @@ int main(int argc, char *argv[]) {
       // location to get the final address
       reg[r0] = mem_read(mem_read(reg[R_PC] + pc_offset));
       update_flags(r0);
-    } break;
+      break;
+    }
     case OP_STI: {
-      // pc offset (PCoffset9)
-      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       // source register (SR)
       uint16_t r1 = (instr >> 9) & 0x7;
+      // pc offset (PCoffset9)
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       mem_write(mem_read(reg[R_PC] + pc_offset), reg[r1]);
-    } break;
+      break;
+    }
     case OP_JMP: {
       // base register (BaseR)
       uint16_t r_base = (instr >> 6) & 0x7;
-      reg[R_PC] = r_base;
-    } break;
+      reg[R_PC] = reg[r_base];
+      break;
+    }
     case OP_LEA: {
       // destination register (DR)
       uint16_t r0 = (instr >> 9) & 0x7;
@@ -371,10 +387,12 @@ int main(int argc, char *argv[]) {
       uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       reg[r0] = reg[R_PC] + pc_offset;
       update_flags(r0);
-    } break;
-    case OP_TRAP:
+      break;
+    }
+    case OP_TRAP: {
       running = handle_trap(instr);
       break;
+    }
     case OP_RTI:
     case OP_RES:
     default:
