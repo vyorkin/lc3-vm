@@ -1,4 +1,4 @@
 # lc3-vm
-Another toy VM, but written in C (WIP).
+Another toy VM, but written in C.
 
-Working through [Write your Own Virtual Machine](https://justinmeiners.github.io/lc3-vm/).
+Source: [Write your Own Virtual Machine](https://justinmeiners.github.io/lc3-vm/).
