@@ -172,9 +172,9 @@ int read_image(const char *image_path) {
 
 int handle_trap(uint16_t instr) {
   switch (instr & 0xFF) {
-  case TRAP_GETC:
+  case TRAP_GETC: {
     reg[R_R0] = (uint16_t)getchar();
-    break;
+  } break;
   case TRAP_OUT: {
     char ch = (char)reg[R_R0];
     putc(ch, stdout);
@@ -189,7 +189,7 @@ int handle_trap(uint16_t instr) {
     fflush(stdout);
   } break;
   case TRAP_IN: {
-    puts("> ");
+    printf("> ");
     char ch = getchar();
     putc(ch, stdout);
     reg[R_R0] = (uint16_t)ch;
@@ -197,8 +197,8 @@ int handle_trap(uint16_t instr) {
   case TRAP_PUTSP: {
     uint16_t *c = memory + reg[R_R0];
     while (*c) {
-      char ch_lo = *c & 0xFF;
-      char ch_hi = *c >> 8;
+      char ch_lo = (*c) & 0xFF;
+      char ch_hi = (*c) >> 8;
       putc(ch_lo, stdout);
       if (ch_hi) {
         putc(ch_hi, stdout);
@@ -207,10 +207,11 @@ int handle_trap(uint16_t instr) {
     }
     fflush(stdout);
   } break;
-  case TRAP_HALT:
+  case TRAP_HALT: {
     puts("HALT\n");
     fflush(stdout);
     return 0;
+  }
   }
   return 1;
 }
@@ -248,14 +249,9 @@ int main(int argc, char *argv[]) {
     uint16_t op = instr >> 12;
     switch (op) {
     case OP_BR: {
-      uint16_t p_flag = (instr >> 10) & 0x1;
-      uint16_t z_flag = (instr >> 11) & 0x1;
-      uint16_t n_flag = (instr >> 12) & 0x1;
-
-      if ((p_flag && reg[R_COND] == FL_NEG) ||
-          (z_flag && reg[R_COND] == FL_ZRO) ||
-          (n_flag && reg[R_COND] == FL_POS)) {
-        uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+      uint16_t cond_flag = (instr >> 9) & 0x7;
+      if (cond_flag & reg[R_COND]) {
         reg[R_PC] += pc_offset;
       }
     } break;
@@ -382,9 +378,11 @@ int main(int argc, char *argv[]) {
     case OP_RTI:
     case OP_RES:
     default:
+      abort();
       break;
     }
   }
 
   restore_input_buffering();
+  return 0;
 }
